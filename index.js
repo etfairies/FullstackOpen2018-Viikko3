@@ -4,6 +4,7 @@ const bodyParser = require('body-parser')
 const morgan = require('morgan')
 const cors = require('cors')
 
+app.use(express.static('build'))
 app.use(cors())
 app.use(morgan('tiny'))
 app.use(bodyParser.json())
@@ -73,9 +74,7 @@ personInPhonebook = (name) => {
 }
 
 app.post('/api/persons', (request, response) => {
-
     const body = request.body
-    console.log(body)
     
     if (body.name === undefined || body.number === undefined) {
         return response.status(400).json({ error: 'name or number missing' })
