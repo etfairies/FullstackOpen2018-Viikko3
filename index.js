@@ -3,12 +3,13 @@ const app = express()
 const bodyParser = require('body-parser')
 const morgan = require('morgan')
 const cors = require('cors')
+const Person = require('./models/person')
 
 app.use(express.static('build'))
 app.use(cors())
 app.use(morgan('tiny'))
 app.use(bodyParser.json())
-  
+
 let persons = [
     {
         "name": "Arto Hellas",
@@ -32,8 +33,20 @@ let persons = [
     }
 ]
 
+const formatPerson = (person) => {
+    return {
+        name: person.name,
+        number: person.number,
+        id: person._id
+    }
+}
+
 app.get('/api/persons', (request, response) => {
-    response.json(persons)
+    Person
+        .find({})
+        .then(people => {
+            response.json(people.map(formatPerson))
+        })
 })
 
 app.get('/info', (request, response) => {
@@ -59,15 +72,21 @@ app.get('/api/persons/:id', (request, response) => {
 })
 
 app.delete('/api/persons/:id', (request, response) => {
-    const id = Number(request.params.id)
-    persons = persons.filter(person => person.id !== id)
-
-    response.status(204).end()
+    Person
+        .findByIdAndRemove(request.params.id)
+        .then(result => {
+            response.status(204).end()
+        })
+        .catch(error => {
+            response.status(400).send({ error: 'malformatted id' })
+        })
 })
 
+/*
 generateId = () => {
     return Math.floor(Math.random() * 100) + persons.length
 }
+*/
 
 personInPhonebook = (name) => {
     return persons.some(person => person.name === name)
@@ -75,22 +94,21 @@ personInPhonebook = (name) => {
 
 app.post('/api/persons', (request, response) => {
     const body = request.body
-    
-    if (body.name === undefined || body.number === undefined) {
-        return response.status(400).json({ error: 'name or number missing' })
-    } else if (personInPhonebook(body.name)) {
-        return response.status(400).json({ error: 'name must be unique' })
+
+    if (body.name === '' || body.number === '') {
+        return response.status(400).send({ error: 'nimi tai numero puuttuu' })
     }
 
-    const person = {
+    const person = new Person({
         name: body.name,
-        number: body.number,
-        id: generateId()
-    }
+        number: body.number
+    })
 
-    persons = persons.concat(person)
-
-    response.json(person)
+    person
+        .save()
+        .then(savedPerson => {
+            response.json(formatPerson(savedPerson))
+        })
 })
 
 const PORT = process.env.PORT || 3001
