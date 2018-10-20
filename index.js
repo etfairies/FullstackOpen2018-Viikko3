@@ -86,11 +86,12 @@ app.delete('/api/persons/:id', (request, response) => {
 generateId = () => {
     return Math.floor(Math.random() * 100) + persons.length
 }
-*/
+
 
 personInPhonebook = (name) => {
     return persons.some(person => person.name === name)
 }
+*/
 
 app.post('/api/persons', (request, response) => {
     const body = request.body
